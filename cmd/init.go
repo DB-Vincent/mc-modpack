@@ -4,6 +4,7 @@
 package cmd
 
 import (
+  "errors"
   "os"
 
 	"github.com/DB-Vincent/mc-modpack/internal/config"
@@ -21,9 +22,21 @@ var initCmd = &cobra.Command{
 	Short: "Initializes a directory where you want to store your modpack",
 	Long: "Initializes a directory where you want to store your modpack",
 	Run: func(cmd *cobra.Command, args []string) {
-    path, err := os.Getwd()
-    if err != nil {
-    	panic(err)
+    path := workingDirectory
+    if workingDirectory == "" {
+      var err error
+      path, err = os.Getwd()
+      if err != nil {
+        panic(err)
+      }
+    }
+
+
+    if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+      err := os.Mkdir(path, 0755)
+      if err != nil {
+        panic(err)
+      }  
     }
 
     // Create a config based on the inputs

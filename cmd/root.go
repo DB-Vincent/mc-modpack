@@ -15,6 +15,8 @@ var rootCmd = &cobra.Command{
 	Long: "A simple CLI tool to update the mods in your modpack",
 }
 
+var workingDirectory string
+
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -22,4 +24,6 @@ func Execute() {
 	}
 }
 
-func init() { }
+func init() {
+  rootCmd.PersistentFlags().StringVar(&workingDirectory, "directory", "", "Directory in which to work")
+}

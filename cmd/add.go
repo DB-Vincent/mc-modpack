@@ -15,9 +15,13 @@ var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Adds a mod to the current modpack",
 	Run: func(cmd *cobra.Command, args []string) {
-    path, err := os.Getwd()
-    if err != nil {
-      panic(err)
+    path := workingDirectory
+    if workingDirectory == "" {
+      var err error
+      path, err = os.Getwd()
+      if err != nil {
+        panic(err)
+      }
     }
 
     if err := config.Exists(path); err != nil {
