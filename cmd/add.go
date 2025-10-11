@@ -12,9 +12,15 @@ import (
 )
 
 var addCmd = &cobra.Command{
-	Use:   "add",
+	Use:   "add [mod-name]",
 	Short: "Adds a mod to the current modpack",
+  Args:  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 	Run: func(cmd *cobra.Command, args []string) {
+    if (len(args) != 1) {
+      cmd.Usage()
+    }
+    modName := args[0]
+
     path := workingDirectory
     if workingDirectory == "" {
       var err error
@@ -33,13 +39,13 @@ var addCmd = &cobra.Command{
       panic(err)
     }
 
-    version, err := modrinth.GetLatestVersion("better-advancements", cfg.McVersion, cfg.Loader)
+    version, err := modrinth.GetLatestVersion(modName, cfg.McVersion, cfg.Loader)
     if err != nil {
       panic(err)
     }
 
     cfg.Mods = append(cfg.Mods, config.Mod{
-      Name: "better-advancements",
+      Name: modName,
       Version: version.ModVersion,
     })
     err = config.Update(path, *cfg)

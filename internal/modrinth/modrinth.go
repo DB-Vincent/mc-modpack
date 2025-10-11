@@ -14,7 +14,7 @@ import (
 
 // Retrieve latest version of mod for given Minecraft version
 func GetLatestVersion(projectId, mcVersion, modLoader string) (*Version, error) {
-  typePriority := []string{"stable", "beta", "alpha"}
+  typePriority := []string{"release", "beta", "alpha"}
 
 	baseURL := fmt.Sprintf("https://api.modrinth.com/v2/project/%s/version", projectId)
 	params := url.Values{}
