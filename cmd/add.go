@@ -45,23 +45,18 @@ var addCmd = &cobra.Command{
       log.Error(fmt.Sprintf("Failed retrieving latest version of specified mod: %s", err.Error()))
     }
 
-    // Check if the mod already exists in the config file, update if it does
-    modExists := false
-    if (len(cfg.Mods) > 0) {
-      for i, mod := range cfg.Mods {
-        if (mod.Name == modName) {
-          modExists = true
-          log.Info(fmt.Sprintf("Current version: %s, updating to new version: %s", mod.Version, version.ModVersion))
-          cfg.Mods[i].Version = version.ModVersion
-        }
-      }
-    }
-
-    // Mod doesn't exist in config file, so we need to add it
-    if !modExists {
+    // Check if mod exists in config file
+    modExists, index := config.HasMod(*cfg, modName)
+    
+    if modExists {
+      log.Info(fmt.Sprintf("Current version: %s, updating to new version: %s", cfg.Mods[index].Version, version.ModVersion))
+      cfg.Mods[index].Version = version.ModVersion
+      cfg.Mods[index].VersionId = version.VersionId
+    } else {
       log.Info(fmt.Sprintf("Adding %s with version %s", modName, version.ModVersion))
       cfg.Mods = append(cfg.Mods, config.Mod{
         Name: modName,
+        VersionId: version.VersionId, 
         Version: version.ModVersion,
       })
     }

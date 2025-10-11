@@ -57,3 +57,18 @@ func Exists(location string) (error) {
 
   return nil
 }
+
+// Check if configuration file has a given mod 
+func HasMod(cfg Config, modName string) (bool, int) {
+  if (len(cfg.Mods) > 0) {
+    for i, mod := range cfg.Mods {
+      if (mod.Name == modName) {
+        // Mod was found
+        return true, i
+      }
+    } 
+  }
+
+  // Mod was not found
+  return false, -1
+}

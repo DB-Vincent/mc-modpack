@@ -11,6 +11,7 @@ type Config struct {
 }
 
 type Mod struct {
-  Name    string
-  Version string
+  Name      string
+  Version   string
+  VersionId string
 }

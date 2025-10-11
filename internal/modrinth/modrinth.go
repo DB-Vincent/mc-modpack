@@ -62,6 +62,33 @@ func GetLatestVersion(projectId, mcVersion, modLoader string) (*Version, error) 
 	return nil, nil
 }
 
+// Get a specific version of a mod
+func GetSpecificVersion(name, id string) (Version, error) {
+	baseURL := fmt.Sprintf("https://api.modrinth.com/v2/project/%s/version/%s", name, id)
+
+	res, err := SendRequest("GET", baseURL)
+  if err != nil {
+    return Version{}, err
+  }
+  defer res.Body.Close()
+
+  if res.StatusCode != http.StatusOK {
+    return Version{}, fmt.Errorf("API returned status %d", res.StatusCode)
+  }
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return Version{}, err
+	}
+
+	var resVersion Version
+	if err := json.Unmarshal(body, &resVersion); err != nil {
+		return Version{}, err
+	}
+
+  return resVersion, nil
+}
+
 // Download mod file
 func DownloadFile(location string, file File) (error) {
   // Create destination file
