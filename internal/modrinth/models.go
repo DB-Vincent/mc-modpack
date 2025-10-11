@@ -19,5 +19,5 @@ type File struct {
 
 type FileHash struct {
   Sha1   string `json:"sha1"`
-  Sha256 string `json:"sha256"`
+  Sha512 string `json:"sha512"`
 }

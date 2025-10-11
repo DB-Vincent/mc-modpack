@@ -89,5 +89,14 @@ func DownloadFile(location string, file File) (error) {
     return err
   }
 
+  // Verify hash
+  hash, err := getHash(fmt.Sprintf("%s/%s", location, file.Name))
+  if err != nil {
+    return err
+  }
+  if (hash != file.Hashes.Sha512) {
+    return fmt.Errorf("Downloaded file hash is different from expected hash")
+  }
+
   return nil
 }
