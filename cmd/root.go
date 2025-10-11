@@ -1,21 +1,27 @@
 /*
-  Copyright © 2025 Vincent De Borger <hello@vincentdeborger.be>
+Copyright © 2025 Vincent De Borger <hello@vincentdeborger.be>
 */
 package cmd
 
 import (
 	"os"
 
+	"github.com/DB-Vincent/mc-modpack/internal/logger"
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "mc-modpack",
-	Short: "A simple CLI tool to update the mods in your modpack",
-	Long: "A simple CLI tool to update the mods in your modpack",
-}
+var (
+  rootCmd = &cobra.Command{
+	  Use:   "mc-modpack",
+  	Short: "A simple CLI tool to update the mods in your modpack",
+  	Long: "A simple CLI tool to update the mods in your modpack",
+  }
 
-var workingDirectory string
+  workingDirectory string
+  verbose          bool
+
+  log = logger.New()
+)
 
 func Execute() {
 	err := rootCmd.Execute()
@@ -26,4 +32,7 @@ func Execute() {
 
 func init() {
   rootCmd.PersistentFlags().StringVar(&workingDirectory, "directory", "", "Directory in which to work")
+  rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
+
+  log.SetVerbose(verbose)
 }

@@ -27,22 +27,22 @@ var addCmd = &cobra.Command{
       var err error
       path, err = os.Getwd()
       if err != nil {
-        panic(err)
+        log.Error(fmt.Sprintf("Failed to get current working directory: %s", err.Error()))
       }
     }
 
     if err := config.Exists(path); err != nil {
-      panic(err)
+      log.Error(fmt.Sprintf("Failed to check if config exists: %s", err.Error()))
     } 
 
     cfg, err := config.Load(path)
     if err != nil {
-      panic(err)
+      log.Error(fmt.Sprintf("Failed to load configuration file: %s", err.Error()))
     }
 
     version, err := modrinth.GetLatestVersion(modName, cfg.McVersion, cfg.Loader)
     if err != nil {
-      panic(err)
+      log.Error(fmt.Sprintf("Failed retrieving latest version of specified mod: %s", err.Error()))
     }
 
     // Check if the mod already exists in the config file, update if it does
@@ -51,16 +51,15 @@ var addCmd = &cobra.Command{
       for i, mod := range cfg.Mods {
         if (mod.Name == modName) {
           modExists = true
-          fmt.Printf("Current version: %s, new version: %s\n", mod.Version, version.ModVersion)
+          log.Info(fmt.Sprintf("Current version: %s, updating to new version: %s", mod.Version, version.ModVersion))
           cfg.Mods[i].Version = version.ModVersion
-          fmt.Printf("Updated to %s\n", cfg.Mods[i].Version)
         }
       }
     }
 
     // Mod doesn't exist in config file, so we need to add it
     if !modExists {
-      fmt.Printf("Adding %s with version %s", modName, version.ModVersion)
+      log.Info(fmt.Sprintf("Adding %s with version %s", modName, version.ModVersion))
       cfg.Mods = append(cfg.Mods, config.Mod{
         Name: modName,
         Version: version.ModVersion,
@@ -69,7 +68,7 @@ var addCmd = &cobra.Command{
 
     err = config.Update(path, *cfg)
     if err != nil {
-      panic(err)
+      log.Error(fmt.Sprintf("Failed updating the configuration file: %s", err.Error()))
     }
 	},
 }

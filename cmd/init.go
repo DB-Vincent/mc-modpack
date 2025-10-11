@@ -5,6 +5,7 @@ package cmd
 
 import (
   "errors"
+  "fmt"
   "os"
 
 	"github.com/DB-Vincent/mc-modpack/internal/config"
@@ -27,7 +28,7 @@ var initCmd = &cobra.Command{
       var err error
       path, err = os.Getwd()
       if err != nil {
-        panic(err)
+        log.Error(fmt.Sprintf("Failed to get the current working directory: %s", err.Error()))
       }
     }
 
@@ -35,7 +36,7 @@ var initCmd = &cobra.Command{
     if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
       err := os.Mkdir(path, 0755)
       if err != nil {
-        panic(err)
+        log.Error(fmt.Sprintf("Failed creating the new directory to store the modpack: %s", err.Error()))
       }  
     }
 
@@ -47,7 +48,10 @@ var initCmd = &cobra.Command{
     }
 
     // Create configuration file
-    config.Update(path, configContent)
+    err := config.Update(path, configContent)
+    if err != nil {
+      log.Error(fmt.Sprintf("Failed updating the configuration file: %s", err.Error()))
+    }
 	},
 }
 
