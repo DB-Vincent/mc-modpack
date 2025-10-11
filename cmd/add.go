@@ -4,6 +4,7 @@ Copyright © 2025 Vincent De Borger <hello@vincentdeborger.be>
 package cmd
 
 import (
+  "fmt"
 	"os"
 
 	"github.com/DB-Vincent/mc-modpack/internal/config"
@@ -44,10 +45,28 @@ var addCmd = &cobra.Command{
       panic(err)
     }
 
-    cfg.Mods = append(cfg.Mods, config.Mod{
-      Name: modName,
-      Version: version.ModVersion,
-    })
+    // Check if the mod already exists in the config file, update if it does
+    modExists := false
+    if (len(cfg.Mods) > 0) {
+      for i, mod := range cfg.Mods {
+        if (mod.Name == modName) {
+          modExists = true
+          fmt.Printf("Current version: %s, new version: %s\n", mod.Version, version.ModVersion)
+          cfg.Mods[i].Version = version.ModVersion
+          fmt.Printf("Updated to %s\n", cfg.Mods[i].Version)
+        }
+      }
+    }
+
+    // Mod doesn't exist in config file, so we need to add it
+    if !modExists {
+      fmt.Printf("Adding %s with version %s", modName, version.ModVersion)
+      cfg.Mods = append(cfg.Mods, config.Mod{
+        Name: modName,
+        Version: version.ModVersion,
+      })
+    }
+
     err = config.Update(path, *cfg)
     if err != nil {
       panic(err)
