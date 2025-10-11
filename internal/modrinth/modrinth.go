@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-  "net/url"
+	"net/url"
+	"os"
 )
-
 
 // Retrieve latest version of mod for given Minecraft version
 func GetLatestVersion(projectId, mcVersion, modLoader string) (*Version, error) {
@@ -60,4 +60,34 @@ func GetLatestVersion(projectId, mcVersion, modLoader string) (*Version, error) 
   }
 
 	return nil, nil
+}
+
+// Download mod file
+func DownloadFile(location string, file File) (error) {
+  // Create destination file
+  out, err := os.Create(fmt.Sprintf("%s/%s", location, file.Name))
+  if err != nil {
+    return err
+  }
+  defer out.Close()
+
+  // Get data
+  res, err := SendRequest("GET", file.Url)
+  if err != nil {
+    return err
+  }
+  defer res.Body.Close()
+
+  // Check if server responded OK 
+  if (res.StatusCode != http.StatusOK) {
+    return fmt.Errorf("server returned bad status: %s", res.Status)
+  }
+
+  // Write data to file
+  _, err = io.Copy(out, res.Body)
+  if err != nil {
+    return err
+  }
+
+  return nil
 }

@@ -66,6 +66,10 @@ var addCmd = &cobra.Command{
       })
     }
 
+    if err = modrinth.DownloadFile(path, version.Files[0]); err != nil {
+      log.Error(fmt.Sprintf("Failed to download mod file: %s", err.Error))
+    }
+
     err = config.Update(path, *cfg)
     if err != nil {
       log.Error(fmt.Sprintf("Failed updating the configuration file: %s", err.Error()))
