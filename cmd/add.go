@@ -62,7 +62,7 @@ var addCmd = &cobra.Command{
     }
 
     if err = modrinth.DownloadFile(path, version.Files[0]); err != nil {
-      log.Error(fmt.Sprintf("Failed to download mod file: %s", err.Error))
+      log.Error(fmt.Sprintf("Failed to download mod file: %s", err.Error()))
     }
     log.Info(fmt.Sprintf("Downloaded mod file %s", version.Files[0].Name))
 
