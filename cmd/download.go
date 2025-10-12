@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/DB-Vincent/mc-modpack/internal/config"
 	"github.com/DB-Vincent/mc-modpack/internal/modrinth"
@@ -16,14 +15,10 @@ var downloadCmd = &cobra.Command{
 	Use:   "download",
 	Short: "Downloads all mods in modpack",
 	Run: func(cmd *cobra.Command, args []string) {
-		path := workingDirectory
-		if workingDirectory == "" {
-			var err error
-			path, err = os.Getwd()
-			if err != nil {
-				log.Error(fmt.Sprintf("Failed to get current working directory: %s", err.Error()))
-				return
-			}
+		path, err := getWorkingDirectory()
+		if err != nil {
+			log.Error(fmt.Sprintf("Failed to get current working directory: %s", err.Error()))
+			return
 		}
 
 		if err := config.Exists(path); err != nil {

@@ -33,6 +33,14 @@ func Execute() {
 	}
 }
 
+// getWorkingDirectory returns the working directory path, using the flag value or current directory
+func getWorkingDirectory() (string, error) {
+	if workingDirectory != "" {
+		return workingDirectory, nil
+	}
+	return os.Getwd()
+}
+
 func init() {
 	rootCmd.PersistentFlags().StringVar(&workingDirectory, "directory", "", "Directory in which to work")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")

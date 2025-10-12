@@ -19,14 +19,10 @@ var delCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		modName := args[0]
 
-		path := workingDirectory
-		if workingDirectory == "" {
-			var err error
-			path, err = os.Getwd()
-			if err != nil {
-				log.Error(fmt.Sprintf("Failed to get current working directory: %s", err.Error()))
-				return
-			}
+		path, err := getWorkingDirectory()
+		if err != nil {
+			log.Error(fmt.Sprintf("Failed to get current working directory: %s", err.Error()))
+			return
 		}
 
 		if err := config.Exists(path); err != nil {

@@ -23,14 +23,10 @@ var initCmd = &cobra.Command{
 	Short: "Initializes a directory where you want to store your modpack",
 	Long:  "Initializes a directory where you want to store your modpack",
 	Run: func(cmd *cobra.Command, args []string) {
-		path := workingDirectory
-		if workingDirectory == "" {
-			var err error
-			path, err = os.Getwd()
-			if err != nil {
-				log.Error(fmt.Sprintf("Failed to get the current working directory: %s", err.Error()))
-				return
-			}
+		path, err := getWorkingDirectory()
+		if err != nil {
+			log.Error(fmt.Sprintf("Failed to get the current working directory: %s", err.Error()))
+			return
 		}
 
 		// Create directory if it doesn't exist
@@ -51,7 +47,7 @@ var initCmd = &cobra.Command{
 		}
 
 		// Create configuration file
-		err := config.Update(path, configContent)
+		err = config.Update(path, configContent)
 		if err != nil {
 			log.Error(fmt.Sprintf("Failed to create modpack configuration file: %v", err))
 			return
