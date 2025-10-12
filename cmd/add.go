@@ -24,33 +24,34 @@ var addCmd = &cobra.Command{
 			var err error
 			path, err = os.Getwd()
 			if err != nil {
-				log.Error(fmt.Sprintf("Failed to get current working directory: %s", err.Error()))
+				return
 			}
 		}
 
 		if err := config.Exists(path); err != nil {
-			log.Error(fmt.Sprintf("Failed to check if config exists: %s", err.Error()))
+			return
 		}
 
 		cfg, err := config.Load(path)
 		if err != nil {
-			log.Error(fmt.Sprintf("Failed to load configuration file: %s", err.Error()))
+			return
 		}
 
 		version, err := modrinth.GetLatestVersion(modName, cfg.McVersion, cfg.Loader)
 		if err != nil {
-			log.Error(fmt.Sprintf("Failed retrieving latest version of specified mod: %s", err.Error()))
+			log.Error(fmt.Sprintf("Failed to find latest version for mod '%s' (MC %s, %s): %v", modName, cfg.McVersion, cfg.Loader, err))
+			return
 		}
 
 		// Check if mod exists in config file
 		modExists, index := config.HasMod(*cfg, modName)
 
 		if modExists {
-			log.Info(fmt.Sprintf("Current version: %s, updating to new version: %s", cfg.Mods[index].Version, version.ModVersion))
+			log.Info(fmt.Sprintf("Updating %s from version %s to %s", modName, cfg.Mods[index].Version, version.ModVersion))
 			cfg.Mods[index].Version = version.ModVersion
 			cfg.Mods[index].VersionId = version.VersionId
 		} else {
-			log.Info(fmt.Sprintf("Adding %s with version %s", modName, version.ModVersion))
+			log.Info(fmt.Sprintf("Adding %s version %s to modpack", modName, version.ModVersion))
 			cfg.Mods = append(cfg.Mods, config.Mod{
 				Name:      modName,
 				VersionId: version.VersionId,
@@ -59,13 +60,15 @@ var addCmd = &cobra.Command{
 		}
 
 		if err = modrinth.DownloadFile(path, version.Files[0]); err != nil {
-			log.Error(fmt.Sprintf("Failed to download mod file: %s", err.Error()))
+			log.Error(fmt.Sprintf("Failed to download mod file '%s': %v", version.Files[0].Name, err))
+			return
 		}
-		log.Info(fmt.Sprintf("Downloaded mod file %s", version.Files[0].Name))
+		log.Info(fmt.Sprintf("Successfully downloaded %s", version.Files[0].Name))
 
 		err = config.Update(path, *cfg)
 		if err != nil {
-			log.Error(fmt.Sprintf("Failed updating the configuration file: %s", err.Error()))
+			log.Error(fmt.Sprintf("Failed to save modpack configuration: %v", err))
+			return
 		}
 	},
 }

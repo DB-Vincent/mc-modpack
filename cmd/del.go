@@ -25,16 +25,19 @@ var delCmd = &cobra.Command{
 			path, err = os.Getwd()
 			if err != nil {
 				log.Error(fmt.Sprintf("Failed to get current working directory: %s", err.Error()))
+				return
 			}
 		}
 
 		if err := config.Exists(path); err != nil {
 			log.Error(fmt.Sprintf("Failed to check if config exists: %s", err.Error()))
+			return
 		}
 
 		cfg, err := config.Load(path)
 		if err != nil {
 			log.Error(fmt.Sprintf("Failed to load configuration file: %s", err.Error()))
+			return
 		}
 
 		// Check if mod exists in config file
@@ -44,6 +47,7 @@ var delCmd = &cobra.Command{
 			mod, err := modrinth.GetSpecificVersion(modName, cfg.Mods[index].VersionId)
 			if err != nil {
 				log.Error(fmt.Sprintf("Failed to get information for requested mod: %s", err.Error()))
+				return
 			}
 
 			cfg.Mods = append(cfg.Mods[:index], cfg.Mods[index+1:]...)
@@ -53,6 +57,7 @@ var delCmd = &cobra.Command{
 			// Remove jar file of deleted mod
 			if err = os.Remove(fmt.Sprintf("%s/%s", path, mod.Files[0].Name)); err != nil {
 				log.Error(fmt.Sprintf("Failed removing the mod's jar-file: %s", err.Error()))
+				return
 			}
 			log.Info(fmt.Sprintf("Deleted %s", mod.Files[0].Name))
 		} else {
