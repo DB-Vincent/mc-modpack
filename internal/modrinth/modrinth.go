@@ -14,7 +14,7 @@ import (
 
 // Retrieve latest version of mod for given Minecraft version
 func GetLatestVersion(projectId, mcVersion, modLoader string) (*Version, error) {
-  typePriority := []string{"release", "beta", "alpha"}
+	typePriority := []string{"release", "beta", "alpha"}
 
 	baseURL := fmt.Sprintf("https://api.modrinth.com/v2/project/%s/version", projectId)
 	params := url.Values{}
@@ -28,14 +28,14 @@ func GetLatestVersion(projectId, mcVersion, modLoader string) (*Version, error) 
 	u.RawQuery = params.Encode()
 
 	res, err := SendRequest("GET", u.String())
-  if err != nil {
-    return nil, err
-  }
-  defer res.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
 
-  if res.StatusCode != http.StatusOK {
-    return nil, fmt.Errorf("API returned status %d", res.StatusCode)
-  }
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d", res.StatusCode)
+	}
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -51,15 +51,15 @@ func GetLatestVersion(projectId, mcVersion, modLoader string) (*Version, error) 
 		return nil, fmt.Errorf("no versions found")
 	}
 
-  for _, priority := range typePriority {
-    for _, version := range versions {
-      if version.Type == priority {
-        return &version, nil
-      }
-    }
-  }
+	for _, priority := range typePriority {
+		for _, version := range versions {
+			if version.Type == priority {
+				return &version, nil
+			}
+		}
+	}
 
-	return nil, nil
+	return nil, fmt.Errorf("no versions found with the given priority (release, beta, alpha)")
 }
 
 // Get a specific version of a mod
@@ -67,14 +67,14 @@ func GetSpecificVersion(name, id string) (Version, error) {
 	baseURL := fmt.Sprintf("https://api.modrinth.com/v2/project/%s/version/%s", name, id)
 
 	res, err := SendRequest("GET", baseURL)
-  if err != nil {
-    return Version{}, err
-  }
-  defer res.Body.Close()
+	if err != nil {
+		return Version{}, err
+	}
+	defer res.Body.Close()
 
-  if res.StatusCode != http.StatusOK {
-    return Version{}, fmt.Errorf("API returned status %d", res.StatusCode)
-  }
+	if res.StatusCode != http.StatusOK {
+		return Version{}, fmt.Errorf("API returned status %d", res.StatusCode)
+	}
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -86,44 +86,44 @@ func GetSpecificVersion(name, id string) (Version, error) {
 		return Version{}, err
 	}
 
-  return resVersion, nil
+	return resVersion, nil
 }
 
 // Download mod file
-func DownloadFile(location string, file File) (error) {
-  // Create destination file
-  out, err := os.Create(fmt.Sprintf("%s/%s", location, file.Name))
-  if err != nil {
-    return err
-  }
-  defer out.Close()
+func DownloadFile(location string, file File) error {
+	// Create destination file
+	out, err := os.Create(fmt.Sprintf("%s/%s", location, file.Name))
+	if err != nil {
+		return err
+	}
+	defer out.Close()
 
-  // Get data
-  res, err := SendRequest("GET", file.Url)
-  if err != nil {
-    return err
-  }
-  defer res.Body.Close()
+	// Get data
+	res, err := SendRequest("GET", file.Url)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
 
-  // Check if server responded OK 
-  if (res.StatusCode != http.StatusOK) {
-    return fmt.Errorf("server returned bad status: %s", res.Status)
-  }
+	// Check if server responded OK
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("server returned bad status: %s", res.Status)
+	}
 
-  // Write data to file
-  _, err = io.Copy(out, res.Body)
-  if err != nil {
-    return err
-  }
+	// Write data to file
+	_, err = io.Copy(out, res.Body)
+	if err != nil {
+		return err
+	}
 
-  // Verify hash
-  hash, err := getHash(fmt.Sprintf("%s/%s", location, file.Name))
-  if err != nil {
-    return err
-  }
-  if (hash != file.Hashes.Sha512) {
-    return fmt.Errorf("Downloaded file hash is different from expected hash")
-  }
+	// Verify hash
+	hash, err := getHash(fmt.Sprintf("%s/%s", location, file.Name))
+	if err != nil {
+		return err
+	}
+	if hash != file.Hashes.Sha512 {
+		return fmt.Errorf("Downloaded file hash is different from expected hash")
+	}
 
-  return nil
+	return nil
 }
