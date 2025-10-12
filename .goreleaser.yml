@@ -1,6 +1,10 @@
 # GoReleaser configuration for mc-modpack
 # https://goreleaser.com/customization/
 
+version: 2
+
+project_name: mc-modpack
+
 # Build configuration
 builds:
   - id: mc-modpack
