@@ -11,16 +11,19 @@ import (
 )
 
 var (
-  rootCmd = &cobra.Command{
-	  Use:   "mc-modpack",
-  	Short: "A simple CLI tool to update the mods in your modpack",
-  	Long: "A simple CLI tool to update the mods in your modpack",
-  }
+	log = logger.New()
 
-  workingDirectory string
-  verbose          bool
+	rootCmd = &cobra.Command{
+		Use:   "mc-modpack",
+		Short: "A simple CLI tool to update the mods in your modpack",
+		Long:  "A simple CLI tool to update the mods in your modpack",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			log.SetVerbose(verbose)
+		},
+	}
 
-  log = logger.New()
+	workingDirectory string
+	verbose          bool
 )
 
 func Execute() {
@@ -31,8 +34,6 @@ func Execute() {
 }
 
 func init() {
-  rootCmd.PersistentFlags().StringVar(&workingDirectory, "directory", "", "Directory in which to work")
-  rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
-
-  log.SetVerbose(verbose)
+	rootCmd.PersistentFlags().StringVar(&workingDirectory, "directory", "", "Directory in which to work")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
 }
