@@ -1,0 +1,61 @@
+# GoReleaser configuration for mc-modpack
+# https://goreleaser.com/customization/
+
+# Build configuration
+builds:
+  - id: mc-modpack
+    binary: mc-modpack
+    main: .
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+    env:
+      - CGO_ENABLED=0
+
+# Archive configuration
+archives:
+  - id: mc-modpack
+    name_template: "mc-modpack_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+
+# Checksums
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+# Release configuration
+release:
+  github:
+    owner: DB-Vincent
+    name: mc-modpack
+  draft: false
+  prerelease: false
+  mode: replace
+
+# Changelog configuration
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - '^build:'
+      - '^chore:'
+
+# Snapshots (for testing)
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+# Metadata
+metadata:
+  mod_timestamp: "{{ .CommitTimestamp }}"
