@@ -61,6 +61,25 @@ var addCmd = &cobra.Command{
 		}
 		log.Info(fmt.Sprintf("Successfully downloaded %s", version.Files[0].Name))
 
+    if (len(version.Dependencies) > 0) {
+      log.Info(fmt.Sprintf("Found %d dependencies, downloading..", len(version.Dependencies)))
+      for _, dependency := range(version.Dependencies) {
+
+        dependencyVersion, err := modrinth.GetLatestVersion(dependency.ProjectId, cfg.McVersion, cfg.Loader)
+        if err != nil {
+			    log.Error(fmt.Sprintf("Failed to find latest version for dependency with id '%s' (MC %s, %s): %v", dependency.ProjectId, cfg.McVersion, cfg.Loader, err))
+          return
+        }
+
+        if err = modrinth.DownloadFile(path, dependencyVersion.Files[0]); err != nil {
+          log.Error(fmt.Sprintf("Failed to download dependency '%s': %v", dependencyVersion.Files[0].Name, err))
+          return
+        }
+
+		    log.Info(fmt.Sprintf("Successfully downloaded dependency %s", dependencyVersion.Files[0].Name))
+      }
+    }
+
 		err = config.Update(path, *cfg)
 		if err != nil {
 			log.Error(fmt.Sprintf("Failed to save modpack configuration: %v", err))

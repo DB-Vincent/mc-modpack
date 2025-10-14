@@ -4,12 +4,13 @@
 package modrinth
 
 type Version struct {
-  GameVersions []string `json:"game_versions"`
-  Loaders      []string `json:"loaders"`
-  ModVersion   string   `json:"version_number"`
-  VersionId    string   `json:"id"`
-  Type         string   `json:"version_type"`
-  Files        []File   `json:"files"`
+  GameVersions []string     `json:"game_versions"`
+  Loaders      []string     `json:"loaders"`
+  ModVersion   string       `json:"version_number"`
+  VersionId    string       `json:"id"`
+  Type         string       `json:"version_type"`
+  Files        []File       `json:"files"`
+  Dependencies []Dependency `json:"dependencies"`
 }
 
 type File struct {
@@ -21,4 +22,10 @@ type File struct {
 type FileHash struct {
   Sha1   string `json:"sha1"`
   Sha512 string `json:"sha512"`
+}
+
+type Dependency struct {
+  VersionId string `json:"version_id"`
+  ProjectId string `json:"project_id"`
+  Type      string `json:"dependency_type"`
 }
