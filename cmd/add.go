@@ -41,11 +41,17 @@ var addCmd = &cobra.Command{
 
 		// Check if mod exists in config file
 		modExists, index := config.HasMod(*cfg, modName)
+    modDownload := true
 
 		if modExists {
-			log.Info(fmt.Sprintf("Updating %s from version %s to %s", modName, cfg.Mods[index].Version, version.ModVersion))
-			cfg.Mods[index].Version = version.ModVersion
-			cfg.Mods[index].VersionId = version.VersionId
+      if cfg.Mods[index].Version != version.ModVersion {
+		    log.Info(fmt.Sprintf("Updating %s from version %s to %s", modName, cfg.Mods[index].Version, version.ModVersion))
+  			cfg.Mods[index].Version = version.ModVersion
+	  		cfg.Mods[index].VersionId = version.VersionId
+      } else {
+		    log.Info(fmt.Sprintf("Already have %s with version %s downloaded", modName, cfg.Mods[index].Version))
+        modDownload = false
+      }
 		} else {
 			log.Info(fmt.Sprintf("Adding %s version %s to modpack", modName, version.ModVersion))
 			cfg.Mods = append(cfg.Mods, config.Mod{
@@ -55,11 +61,14 @@ var addCmd = &cobra.Command{
 			})
 		}
 
-		if err = modrinth.DownloadFile(path, version.Files[0]); err != nil {
-			log.Error(fmt.Sprintf("Failed to download mod file '%s': %v", version.Files[0].Name, err))
-			return
-		}
-		log.Info(fmt.Sprintf("Successfully downloaded %s", version.Files[0].Name))
+		if modDownload {
+      if err = modrinth.DownloadFile(path, version.Files[0]); err != nil {
+        log.Error(fmt.Sprintf("Failed to download dependency '%s': %v", version.Files[0].Name, err))
+        return
+      }
+		  log.Info(fmt.Sprintf("Successfully downloaded %s", version.Files[0].Name))
+    }
+
 
     if (len(version.Dependencies) > 0) {
       log.Info(fmt.Sprintf("Found %d dependencies, downloading..", len(version.Dependencies)))
@@ -70,13 +79,37 @@ var addCmd = &cobra.Command{
 			    log.Error(fmt.Sprintf("Failed to find latest version for dependency with id '%s' (MC %s, %s): %v", dependency.ProjectId, cfg.McVersion, cfg.Loader, err))
           return
         }
+        
+        // Check if mod exists in config file
+    		modExists, index := config.HasMod(*cfg, dependencyVersion.Files[0].Name)
+        modDownload := true
 
-        if err = modrinth.DownloadFile(path, dependencyVersion.Files[0]); err != nil {
-          log.Error(fmt.Sprintf("Failed to download dependency '%s': %v", dependencyVersion.Files[0].Name, err))
-          return
+    		if modExists {
+		    	if cfg.Mods[index].Version != dependencyVersion.ModVersion {
+    		    log.Info(fmt.Sprintf("Updating %s from version %s to %s", dependencyVersion.Files[0].Name, cfg.Mods[index].Version, dependencyVersion.ModVersion))
+  	    		cfg.Mods[index].Version = dependencyVersion.ModVersion
+	  		    cfg.Mods[index].VersionId = dependencyVersion.VersionId
+          } else {
+		        log.Info(fmt.Sprintf("Already have %s with version %s downloaded", dependencyVersion.Files[0].Name, cfg.Mods[index].Version))
+            modDownload = false
+          }
+    		} else {
+    			log.Info(fmt.Sprintf("Adding %s version %s to modpack", dependencyVersion.Files[0].Name, dependencyVersion.ModVersion))
+		    	cfg.Mods = append(cfg.Mods, config.Mod{
+    				Name:      dependencyVersion.Files[0].Name,
+    				VersionId: dependencyVersion.VersionId,
+    				Version:   dependencyVersion.ModVersion,
+    			})
+    		}
+  
+        if modDownload {
+          if err = modrinth.DownloadFile(path, dependencyVersion.Files[0]); err != nil {
+            log.Error(fmt.Sprintf("Failed to download dependency '%s': %v", dependencyVersion.Files[0].Name, err))
+            return
+          }
+
+		      log.Info(fmt.Sprintf("Successfully downloaded dependency %s", dependencyVersion.Files[0].Name))
         }
-
-		    log.Info(fmt.Sprintf("Successfully downloaded dependency %s", dependencyVersion.Files[0].Name))
       }
     }
 
