@@ -39,79 +39,20 @@ var addCmd = &cobra.Command{
 			return
 		}
 
-		// Check if mod exists in config file
-		modExists, index := config.HasMod(*cfg, modName)
-    modDownload := true
-
-		if modExists {
-      if cfg.Mods[index].Version != version.ModVersion {
-		    log.Info(fmt.Sprintf("Updating %s from version %s to %s", modName, cfg.Mods[index].Version, version.ModVersion))
-  			cfg.Mods[index].Version = version.ModVersion
-	  		cfg.Mods[index].VersionId = version.VersionId
-      } else {
-		    log.Info(fmt.Sprintf("Already have %s with version %s downloaded", modName, cfg.Mods[index].Version))
-        modDownload = false
-      }
-		} else {
-			log.Info(fmt.Sprintf("Adding %s version %s to modpack", modName, version.ModVersion))
-			cfg.Mods = append(cfg.Mods, config.Mod{
-				Name:      modName,
-				VersionId: version.VersionId,
-				Version:   version.ModVersion,
-			})
+		if err = addMod(cfg, modName, path); err != nil {
+			log.Error(fmt.Sprintf("Failed to add mod '%s': %v", modName, err))
+			return
 		}
 
-		if modDownload {
-      if err = modrinth.DownloadFile(path, version.Files[0]); err != nil {
-        log.Error(fmt.Sprintf("Failed to download dependency '%s': %v", version.Files[0].Name, err))
-        return
-      }
-		  log.Info(fmt.Sprintf("Successfully downloaded %s", version.Files[0].Name))
-    }
-
-
-    if (len(version.Dependencies) > 0) {
-      log.Info(fmt.Sprintf("Found %d dependencies, downloading..", len(version.Dependencies)))
-      for _, dependency := range(version.Dependencies) {
-
-        dependencyVersion, err := modrinth.GetLatestVersion(dependency.ProjectId, cfg.McVersion, cfg.Loader)
-        if err != nil {
-			    log.Error(fmt.Sprintf("Failed to find latest version for dependency with id '%s' (MC %s, %s): %v", dependency.ProjectId, cfg.McVersion, cfg.Loader, err))
-          return
-        }
-        
-        // Check if mod exists in config file
-    		modExists, index := config.HasMod(*cfg, dependencyVersion.Files[0].Name)
-        modDownload := true
-
-    		if modExists {
-		    	if cfg.Mods[index].Version != dependencyVersion.ModVersion {
-    		    log.Info(fmt.Sprintf("Updating %s from version %s to %s", dependencyVersion.Files[0].Name, cfg.Mods[index].Version, dependencyVersion.ModVersion))
-  	    		cfg.Mods[index].Version = dependencyVersion.ModVersion
-	  		    cfg.Mods[index].VersionId = dependencyVersion.VersionId
-          } else {
-		        log.Info(fmt.Sprintf("Already have %s with version %s downloaded", dependencyVersion.Files[0].Name, cfg.Mods[index].Version))
-            modDownload = false
-          }
-    		} else {
-    			log.Info(fmt.Sprintf("Adding %s version %s to modpack", dependencyVersion.Files[0].Name, dependencyVersion.ModVersion))
-		    	cfg.Mods = append(cfg.Mods, config.Mod{
-    				Name:      dependencyVersion.Files[0].Name,
-    				VersionId: dependencyVersion.VersionId,
-    				Version:   dependencyVersion.ModVersion,
-    			})
-    		}
-  
-        if modDownload {
-          if err = modrinth.DownloadFile(path, dependencyVersion.Files[0]); err != nil {
-            log.Error(fmt.Sprintf("Failed to download dependency '%s': %v", dependencyVersion.Files[0].Name, err))
-            return
-          }
-
-		      log.Info(fmt.Sprintf("Successfully downloaded dependency %s", dependencyVersion.Files[0].Name))
-        }
-      }
-    }
+		if len(version.Dependencies) > 0 {
+			log.Info(fmt.Sprintf("Found %d dependencies, downloading..", len(version.Dependencies)))
+			for _, dependency := range version.Dependencies {
+				if err = addMod(cfg, dependency.ProjectId, path); err != nil {
+					log.Error(fmt.Sprintf("Failed to add dependency: %v", err))
+					return
+				}
+			}
+		}
 
 		err = config.Update(path, *cfg)
 		if err != nil {
@@ -119,6 +60,44 @@ var addCmd = &cobra.Command{
 			return
 		}
 	},
+}
+
+func addMod(cfg *config.Config, modName string, path string) error {
+	version, err := modrinth.GetLatestVersion(modName, cfg.McVersion, cfg.Loader)
+	if err != nil {
+		return fmt.Errorf("failed to find latest version for mod '%s' (MC %s, %s): %v", modName, cfg.McVersion, cfg.Loader, err)
+	}
+
+	// Check if mod exists in config file
+	modExists, index := config.HasMod(*cfg, modName)
+	modDownload := true
+
+	if modExists {
+		if cfg.Mods[index].Version != version.ModVersion {
+			log.Info(fmt.Sprintf("Updating %s from version %s to %s", version.Files[0].Name, cfg.Mods[index].Version, version.ModVersion))
+			cfg.Mods[index].Version = version.ModVersion
+			cfg.Mods[index].VersionId = version.VersionId
+		} else {
+			log.Info(fmt.Sprintf("Already have %s with version %s downloaded", version.Files[0].Name, cfg.Mods[index].Version))
+			modDownload = false
+		}
+	} else {
+		log.Info(fmt.Sprintf("Adding %s version %s to modpack", version.Files[0].Name, version.ModVersion))
+		cfg.Mods = append(cfg.Mods, config.Mod{
+			Name:      modName,
+			VersionId: version.VersionId,
+			Version:   version.ModVersion,
+		})
+	}
+
+	if modDownload {
+		if err = modrinth.DownloadFile(path, version.Files[0]); err != nil {
+			return fmt.Errorf("failed to download mod '%s': %v", version.Files[0].Name, err)
+		}
+		log.Info(fmt.Sprintf("Successfully downloaded %s", version.Files[0].Name))
+	}
+
+	return nil
 }
 
 func init() {
