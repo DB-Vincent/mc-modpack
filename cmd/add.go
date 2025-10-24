@@ -47,7 +47,7 @@ var addCmd = &cobra.Command{
 		if len(version.Dependencies) > 0 {
 			log.Info(fmt.Sprintf("Found %d dependencies, downloading..", len(version.Dependencies)))
 			for _, dependency := range version.Dependencies {
-				if err = addMod(cfg, dependency.ProjectId, path); err != nil {
+				if err = addDependency(cfg, dependency.ProjectId, modName, path); err != nil {
 					log.Error(fmt.Sprintf("Failed to add dependency: %v", err))
 					return
 				}
@@ -98,6 +98,66 @@ func addMod(cfg *config.Config, modName string, path string) error {
 	}
 
 	return nil
+}
+
+func addDependency(cfg *config.Config, dependencyProjectId string, requiredByMod string, path string) error {
+	// Get project information to get the actual name
+	project, err := modrinth.GetProject(dependencyProjectId)
+	if err != nil {
+		return fmt.Errorf("failed to get project information for dependency '%s': %v", dependencyProjectId, err)
+	}
+
+	version, err := modrinth.GetLatestVersion(dependencyProjectId, cfg.McVersion, cfg.Loader)
+	if err != nil {
+		return fmt.Errorf("failed to find latest version for dependency '%s' (MC %s, %s): %v", project.Slug, cfg.McVersion, cfg.Loader, err)
+	}
+
+	// Check if dependency exists in config file (using the project slug as the name)
+	dependencyExists, index := config.HasDependency(*cfg, project.Slug)
+	dependencyDownload := true
+
+	if dependencyExists {
+		// Add the requiring mod to the RequiredBy list if not already present
+		if !contains(cfg.Dependencies[index].RequiredBy, requiredByMod) {
+			cfg.Dependencies[index].RequiredBy = append(cfg.Dependencies[index].RequiredBy, requiredByMod)
+		}
+
+		if cfg.Dependencies[index].Version != version.ModVersion {
+			log.Info(fmt.Sprintf("Updating dependency %s from version %s to %s", version.Files[0].Name, cfg.Dependencies[index].Version, version.ModVersion))
+			cfg.Dependencies[index].Version = version.ModVersion
+			cfg.Dependencies[index].VersionId = version.VersionId
+		} else {
+			log.Info(fmt.Sprintf("Already have dependency %s with version %s downloaded", version.Files[0].Name, cfg.Dependencies[index].Version))
+			dependencyDownload = false
+		}
+	} else {
+		log.Info(fmt.Sprintf("Adding dependency %s version %s to modpack (required by %s)", version.Files[0].Name, version.ModVersion, requiredByMod))
+		cfg.Dependencies = append(cfg.Dependencies, config.Dependency{
+			Name:       project.Slug, // Use the actual project title instead of project ID
+			VersionId:  version.VersionId,
+			Version:    version.ModVersion,
+			RequiredBy: []string{requiredByMod},
+		})
+	}
+
+	if dependencyDownload {
+		if err = modrinth.DownloadFile(path, version.Files[0]); err != nil {
+			return fmt.Errorf("failed to download dependency '%s': %v", version.Files[0].Name, err)
+		}
+		log.Info(fmt.Sprintf("Successfully downloaded dependency %s", version.Files[0].Name))
+	}
+
+	return nil
+}
+
+// Helper function to check if a string slice contains a specific string
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }
 
 func init() {

@@ -62,6 +62,33 @@ func GetLatestVersion(projectId, mcVersion, modLoader string) (*Version, error) 
 	return nil, fmt.Errorf("no versions found with the given priority (release, beta, alpha)")
 }
 
+// Get project information by project ID
+func GetProject(projectId string) (*Project, error) {
+	baseURL := fmt.Sprintf("https://api.modrinth.com/v2/project/%s", projectId)
+
+	res, err := SendRequest("GET", baseURL)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d", res.StatusCode)
+	}
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var project Project
+	if err := json.Unmarshal(body, &project); err != nil {
+		return nil, err
+	}
+
+	return &project, nil
+}
+
 // Get a specific version of a mod
 func GetSpecificVersion(name, id string) (Version, error) {
 	baseURL := fmt.Sprintf("https://api.modrinth.com/v2/project/%s/version/%s", name, id)

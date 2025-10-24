@@ -74,3 +74,17 @@ func HasMod(cfg Config, modName string) (bool, int) {
 	// Mod was not found
 	return false, -1
 }
+
+func HasDependency(cfg Config, dependencyName string) (bool, int) {
+	if len(cfg.Dependencies) > 0 {
+		for i, dependency := range cfg.Dependencies {
+			if dependency.Name == dependencyName {
+				// Dependency was found
+				return true, i
+			}
+		}
+	}
+
+	// Dependency was not found
+	return false, -1
+}
